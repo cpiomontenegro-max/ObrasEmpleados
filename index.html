@@ -4,15 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Horarios Semanales</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#F7F6F3;--surface:#FFFFFF;--border:#E5E3DC;--text:#1A1917;--muted:#6B6966;--faint:#AEACA7;}
+:root{
+  --bg:#F7F6F3;--surface:#FFFFFF;--border:#E5E3DC;--text:#1A1917;--muted:#6B6966;--faint:#AEACA7;
+  --cat-color:#2563EB;--cat-bg:#DBEAFE;--cat-text:#1E3A8A;
+  --mant-color:#16A34A;--mant-bg:#DCFCE7;--mant-text:#14532D;
+  --seg-color:#DC2626;--seg-bg:#FEE2E2;--seg-text:#7F1D1D;
+  --enc-color:#6B7280;--enc-bg:#F3F4F6;--enc-text:#1F2937;
+  --slot-h:26px;
+}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
-.app{max-width:1100px;margin:0 auto;padding:24px 16px 60px;}
-header{margin-bottom:24px;}
-header h1{font-size:22px;font-weight:500;letter-spacing:-0.3px;margin-bottom:4px;}
+.app{max-width:1200px;margin:0 auto;padding:24px 16px 60px;}
+header{margin-bottom:24px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+header h1{font-size:22px;font-weight:600;letter-spacing:-0.3px;margin-bottom:4px;}
 header p{font-size:13px;color:var(--muted);}
+.header-actions{display:flex;gap:8px;}
 .nav{display:flex;gap:4px;margin-bottom:28px;border-bottom:1px solid var(--border);}
 .nav-btn{padding:9px 18px;font-size:13px;font-family:'DM Sans',sans-serif;border:none;background:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
 .nav-btn:hover{color:var(--text);}
@@ -24,61 +32,64 @@ header p{font-size:13px;color:var(--muted);}
 .grid-info{font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:12px;}
 .legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
 .leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);}
-.lsq{width:9px;height:9px;border-radius:2px;}
+.lsq{width:10px;height:10px;border-radius:2px;}
 .grid-wrap{overflow-x:auto;}
-.grid-inner{display:flex;min-width:720px;}
-.time-col{display:flex;flex-direction:column;align-items:flex-end;padding-right:6px;flex-shrink:0;padding-top:42px;}
-.time-label{height:20px;font-size:10px;color:var(--faint);line-height:20px;font-family:'DM Mono',monospace;}
+.grid-inner{display:flex;min-width:800px;}
+.time-col{display:flex;flex-direction:column;align-items:flex-end;padding-right:8px;flex-shrink:0;padding-top:48px;width:42px;}
+.time-label{height:var(--slot-h);font-size:10px;color:var(--faint);line-height:var(--slot-h);font-family:'DM Mono',monospace;}
 .days-area{display:flex;flex:1;border-left:2px solid var(--border);}
 .day-col{flex:1;min-width:0;border-right:2px solid var(--border);position:relative;}
-.day-hdr{font-size:11px;font-weight:500;color:var(--muted);text-align:center;padding:6px 0 8px;border-bottom:2px solid var(--border);text-transform:uppercase;letter-spacing:.5px;background:var(--bg);position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:center;gap:6px;}
-.add-day-btn{width:18px;height:18px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;line-height:1;transition:all .15s;flex-shrink:0;}
+.day-hdr{font-size:12px;font-weight:600;color:var(--muted);text-align:center;padding:8px 0 10px;border-bottom:2px solid var(--border);text-transform:uppercase;letter-spacing:.5px;background:var(--bg);position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:center;gap:6px;}
+.add-day-btn{width:20px;height:20px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;line-height:1;transition:all .15s;flex-shrink:0;}
 .add-day-btn:hover{background:var(--text);color:#fff;border-color:var(--text);}
 .col-rows{position:relative;}
 .hour-line{position:absolute;left:0;right:0;border-top:1px solid var(--border);opacity:.4;}
 .hour-line.full{opacity:.7;}
-.col-inner{display:flex;gap:1px;position:absolute;top:0;left:2px;right:2px;}
-.pcol{flex:1;min-width:14px;position:relative;}
-.block{position:absolute;left:0;right:0;border-radius:3px;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;transition:box-shadow .12s;}
-.block:hover{box-shadow:0 0 0 2px rgba(0,0,0,.35);}
-.block.selected{box-shadow:0 0 0 2px #1A1917;}
-.block span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:9px;font-weight:500;white-space:nowrap;overflow:hidden;padding:2px 0;}
-.dhandle{position:absolute;left:0;right:0;height:8px;cursor:ns-resize;z-index:5;display:flex;align-items:center;justify-content:center;}
-.dhandle::after{content:'';width:12px;height:2px;border-radius:1px;background:rgba(0,0,0,.25);}
+.col-inner{display:flex;gap:2px;position:absolute;top:0;left:3px;right:3px;}
+.pcol{flex:1;min-width:20px;position:relative;}
+.block{position:absolute;left:0;right:0;border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;transition:box-shadow .12s;border:1.5px solid transparent;}
+.block:hover{box-shadow:0 0 0 2px rgba(0,0,0,.3);z-index:10;}
+.block.selected{box-shadow:0 0 0 2.5px #1A1917;z-index:10;}
+.block-name{font-size:11px;font-weight:600;padding:2px 3px;width:100%;text-align:center;line-height:1.3;word-break:break-word;overflow:hidden;}
+.block-name.vertical{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;padding:4px 0;height:calc(100% - 20px);display:flex;align-items:center;justify-content:center;}
+.block-time{font-size:9px;font-family:'DM Mono',monospace;opacity:0.75;white-space:nowrap;padding:0 2px;width:100%;text-align:center;}
+.dhandle{position:absolute;left:0;right:0;height:10px;cursor:ns-resize;z-index:5;display:flex;align-items:center;justify-content:center;}
+.dhandle::after{content:'';width:14px;height:2px;border-radius:1px;background:rgba(0,0,0,.25);}
 .dhandle.top{top:0;}
 .dhandle.bottom{bottom:0;}
 
 /* MODAL */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:2000;display:none;align-items:center;justify-content:center;}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:2000;display:none;align-items:center;justify-content:center;}
 .modal-bg.open{display:flex;}
-.modal{background:var(--surface);border-radius:14px;padding:24px;width:320px;max-width:90vw;}
-.modal h3{font-size:15px;font-weight:500;margin-bottom:16px;}
-.modal label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px;margin-top:10px;}
-.modal select,.modal input[type=time]{font-size:13px;font-family:'DM Sans',sans-serif;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);width:100%;}
-.modal select:focus,.modal input[type=time]:focus{outline:none;border-color:var(--faint);}
-.modal-btns{display:flex;gap:8px;margin-top:18px;}
-.modal-btns button{flex:1;padding:9px;font-size:13px;font-family:'DM Sans',sans-serif;border-radius:8px;cursor:pointer;border:1px solid var(--border);}
+.modal{background:var(--surface);border-radius:16px;padding:28px;width:340px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.15);}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:18px;}
+.modal label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px;margin-top:12px;}
+.modal select,.modal input[type=time],.modal input[type=text]{font-size:13px;font-family:'DM Sans',sans-serif;padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:var(--bg);color:var(--text);width:100%;}
+.modal select:focus,.modal input:focus{outline:none;border-color:var(--faint);}
+.modal-btns{display:flex;gap:8px;margin-top:20px;}
+.modal-btns button{flex:1;padding:10px;font-size:13px;font-family:'DM Sans',sans-serif;border-radius:9px;cursor:pointer;border:1px solid var(--border);font-weight:500;}
 .modal-btns .btn-confirm{background:var(--text);color:#fff;border-color:var(--text);}
 .modal-btns .btn-cancel{background:var(--surface);color:var(--text);}
+.modal-btns .btn-danger{background:#DC2626;color:#fff;border-color:#DC2626;}
 
 /* EDITOR */
-.editor{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;z-index:1000;min-width:210px;box-shadow:0 8px 24px rgba(0,0,0,.1);display:none;}
-.editor h3{font-size:13px;font-weight:500;margin-bottom:12px;}
+.editor{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;z-index:1000;min-width:220px;box-shadow:0 8px 32px rgba(0,0,0,.12);display:none;}
+.editor h3{font-size:13px;font-weight:600;margin-bottom:14px;padding-right:20px;}
 .editor label{font-size:11px;color:var(--muted);display:block;margin-bottom:3px;}
-.editor input[type=time]{font-size:12px;font-family:'DM Mono',monospace;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);width:100%;margin-bottom:10px;}
+.editor input[type=time]{font-size:12px;font-family:'DM Mono',monospace;padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg);color:var(--text);width:100%;margin-bottom:10px;}
 .editor input[type=time]:focus{outline:none;border-color:var(--faint);}
 .ed-dur{font-size:12px;color:var(--muted);margin-bottom:10px;}
 .ed-row{display:flex;gap:6px;margin-bottom:8px;}
-.ed-row button{flex:1;padding:6px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--text);cursor:pointer;}
+.ed-row button{flex:1;padding:7px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);cursor:pointer;}
 .ed-row button:hover{background:var(--bg);}
 .ed-del{color:#c0392b;border-color:#e0b4b4;}
 .ed-del:hover{background:#fff5f5 !important;}
-.ed-close{position:absolute;top:10px;right:12px;background:none;border:none;font-size:16px;cursor:pointer;color:var(--faint);line-height:1;}
-.rot-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
-.rot-btn{padding:7px 14px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:20px;background:var(--surface);color:var(--text);cursor:pointer;}
+.ed-close{position:absolute;top:12px;right:14px;background:none;border:none;font-size:16px;cursor:pointer;color:var(--faint);line-height:1;}
+.rot-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+.rot-btn{padding:8px 16px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:20px;background:var(--surface);color:var(--text);cursor:pointer;}
 .rot-btn:hover{background:var(--bg);}
-.rot-note{font-size:11px;color:var(--muted);margin-top:8px;}
-.tip{position:fixed;background:var(--text);color:#fff;border-radius:7px;padding:6px 10px;font-size:11px;pointer-events:none;z-index:9999;display:none;line-height:1.5;}
+.rot-note{font-size:11px;color:var(--muted);margin-top:10px;}
+.tip{position:fixed;background:var(--text);color:#fff;border-radius:8px;padding:7px 11px;font-size:11px;pointer-events:none;z-index:9999;display:none;line-height:1.6;}
 
 /* FICHAS */
 .emp-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;}
@@ -89,15 +100,14 @@ header p{font-size:13px;color:var(--muted);}
 .etab.active .dot{filter:brightness(3);}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px;}
 .card-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;}
-.avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;flex-shrink:0;font-family:'DM Mono',monospace;}
+.avatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;flex-shrink:0;font-family:'DM Mono',monospace;}
 .card-hdr-info h2{font-size:16px;font-weight:500;margin-bottom:4px;}
-.badge{display:inline-block;padding:2px 9px;border-radius:8px;font-size:11px;font-weight:500;}
+.badge{display:inline-block;padding:3px 10px;border-radius:8px;font-size:11px;font-weight:600;}
 .day-row{display:flex;align-items:center;padding:11px 20px;border-bottom:1px solid var(--border);}
 .day-row:last-child{border-bottom:none;}
-.day-lbl{font-size:11px;font-weight:500;color:var(--muted);width:96px;flex-shrink:0;text-transform:uppercase;letter-spacing:.4px;}
+.day-lbl{font-size:11px;font-weight:500;color:var(--muted);width:100px;flex-shrink:0;text-transform:uppercase;letter-spacing:.4px;}
 .day-sh{font-size:13px;color:var(--text);flex:1;}
 .day-sh.libre{color:var(--faint);font-style:italic;}
-.day-sh.rot{color:var(--muted);font-style:italic;}
 .hrs-pill{font-size:11px;font-weight:500;padding:3px 10px;border-radius:10px;margin-left:8px;flex-shrink:0;}
 .total-bar{padding:13px 20px;background:var(--bg);display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);}
 .total-bar span:first-child{font-size:12px;color:var(--muted);}
@@ -110,19 +120,52 @@ header p{font-size:13px;color:var(--muted);}
 .copy-btn.copied{background:#E6F5EE;border-color:#3DB87A;color:#0A5C38;}
 .sum-wrap{overflow-x:auto;padding:0 20px 20px;}
 .sum-wrap table{width:100%;border-collapse:collapse;font-size:12px;margin-top:16px;}
-.sum-wrap th{padding:8px;font-weight:500;font-size:11px;color:var(--muted);text-align:center;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.4px;}
+.sum-wrap th{padding:9px;font-weight:500;font-size:11px;color:var(--muted);text-align:center;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.4px;}
 .sum-wrap th:first-child{text-align:left;}
 .sum-wrap td{padding:9px 8px;border-bottom:1px solid var(--border);text-align:center;vertical-align:middle;line-height:1.4;}
 .sum-wrap td:first-child{text-align:left;font-weight:500;}
 .sum-wrap tr:last-child td{border-bottom:none;}
-.emp-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+.emp-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+
+/* GESTIÓN EMPLEADOS */
+.mgmt-btn{padding:8px 16px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:20px;background:var(--surface);color:var(--text);cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:6px;}
+.mgmt-btn:hover{background:var(--bg);}
+.emp-list{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:280px;overflow-y:auto;}
+.emp-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;}
+.emp-item-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.emp-item-name{flex:1;font-size:13px;font-weight:500;}
+.emp-item-area{font-size:11px;color:var(--muted);}
+.emp-item-actions{display:flex;gap:6px;}
+.emp-action-btn{padding:4px 10px;font-size:11px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:7px;background:var(--surface);cursor:pointer;}
+.emp-action-btn:hover{background:var(--bg);}
+.emp-action-del{color:#DC2626;border-color:#fca5a5;}
+.emp-action-del:hover{background:#FEF2F2 !important;}
+
+/* SYNC STATUS */
+.sync-status{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);padding:5px 12px;border:1px solid var(--border);border-radius:20px;background:var(--surface);}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#AEACA7;}
+.sync-dot.ok{background:#16A34A;}
+.sync-dot.err{background:#DC2626;}
+.sync-dot.saving{background:#E0A429;animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* AREA LEGEND BADGES */
+.area-badge-cantina{background:var(--cat-bg);color:var(--cat-text);}
+.area-badge-mantenimiento{background:var(--mant-bg);color:var(--mant-text);}
+.area-badge-encargado{background:var(--enc-bg);color:var(--enc-text);}
 </style>
 </head>
 <body>
 <div class="app">
   <header>
-    <h1>Horarios semanales</h1>
-    <p>Cantina · Mantenimiento · Serenos</p>
+    <div>
+      <h1>Horarios semanales</h1>
+      <p id="header-subtitle">Cantina · Mantenimiento · Seguridad · Encargado</p>
+    </div>
+    <div class="header-actions">
+      <div class="sync-status" id="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sin guardar</span></div>
+      <button class="mgmt-btn" onclick="openEmpMgmt()">👥 Empleados</button>
+    </div>
   </header>
   <nav class="nav">
     <button class="nav-btn active" onclick="showView('grilla',this)">Grilla visual</button>
@@ -188,27 +231,207 @@ header p{font-size:13px;color:var(--muted);}
   </div>
 </div>
 
+<!-- MODAL gestión empleados -->
+<div class="modal-bg" id="modal-emp-bg">
+  <div class="modal" style="width:420px;">
+    <h3>Gestión de empleados</h3>
+    <div class="emp-list" id="emp-mgmt-list"></div>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:500;">Agregar empleado</p>
+      <label>Nombre</label>
+      <input type="text" id="new-emp-name" placeholder="Nombre del empleado" style="margin-bottom:8px;">
+      <label>Categoría</label>
+      <select id="new-emp-area">
+        <option value="Cantina">Cantina</option>
+        <option value="Mantenimiento">Mantenimiento</option>
+        <option value="Seguridad">Seguridad</option>
+        <option value="Encargado">Encargado</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeEmpMgmt()">Cerrar</button>
+      <button class="btn-confirm" onclick="addEmployee()">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL editar empleado -->
+<div class="modal-bg" id="modal-edit-emp-bg">
+  <div class="modal">
+    <h3>Editar empleado</h3>
+    <label>Nombre</label>
+    <input type="text" id="edit-emp-name" placeholder="Nombre">
+    <label>Categoría</label>
+    <select id="edit-emp-area">
+      <option value="Cantina">Cantina</option>
+      <option value="Mantenimiento">Mantenimiento</option>
+      <option value="Seguridad">Seguridad</option>
+      <option value="Encargado">Encargado</option>
+    </select>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeEditEmp()">Cancelar</button>
+      <button class="btn-confirm" onclick="confirmEditEmp()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL confirmar borrar empleado -->
+<div class="modal-bg" id="modal-del-emp-bg">
+  <div class="modal">
+    <h3>¿Eliminar empleado?</h3>
+    <p style="font-size:13px;color:var(--muted);margin-top:4px;">Se eliminará <strong id="del-emp-name-label"></strong> y todos sus turnos de la grilla.</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeDelEmp()">Cancelar</button>
+      <button class="btn-danger" onclick="confirmDelEmp()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL configurar Google Sheets -->
+<div class="modal-bg" id="modal-sheets-bg">
+  <div class="modal" style="width:420px;">
+    <h3>🔗 Conectar Google Sheets</h3>
+    <p style="font-size:12px;color:var(--muted);margin:8px 0 16px;line-height:1.6;">Pegá la URL de tu Google Apps Script para guardar los horarios automáticamente en Google Sheets.</p>
+    <label>URL del Apps Script</label>
+    <input type="text" id="sheets-url-input" placeholder="https://script.google.com/macros/s/...">
+    <p style="font-size:11px;color:var(--muted);margin-top:8px;">¿No tenés el script? Pedile a Claude que te lo genere 😊</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeSheetsModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="saveSheetsUrl()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <div class="tip" id="tip"></div>
 
 <script>
+// ─────────────────────────────────────────────
+// CONFIGURACIÓN GOOGLE SHEETS
+// ─────────────────────────────────────────────
+let SHEETS_URL = localStorage.getItem('sheets_url') || '';
+let saveTimer = null;
+
+function openSheetsModal(){
+  document.getElementById('sheets-url-input').value = SHEETS_URL;
+  document.getElementById('modal-sheets-bg').classList.add('open');
+}
+function closeSheetsModal(){document.getElementById('modal-sheets-bg').classList.remove('open');}
+function saveSheetsUrl(){
+  SHEETS_URL = document.getElementById('sheets-url-input').value.trim();
+  localStorage.setItem('sheets_url', SHEETS_URL);
+  closeSheetsModal();
+  if(SHEETS_URL) saveToSheets();
+}
+
+function setSyncStatus(state, msg){
+  const dot = document.getElementById('sync-dot');
+  const txt = document.getElementById('sync-text');
+  dot.className = 'sync-dot' + (state ? ' '+state : '');
+  txt.textContent = msg;
+}
+
+async function saveToSheets(){
+  if(!SHEETS_URL){ setSyncStatus('','Sin guardar'); return; }
+  setSyncStatus('saving','Guardando...');
+  try {
+    const payload = { employees: EMP, days: days.map(d=>({label:d.label,blocks:d.blocks})), rVi, rSab, rDom };
+    await fetch(SHEETS_URL, {
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({action:'save', data: payload})
+    });
+    setSyncStatus('ok','Guardado ✓');
+  } catch(e) {
+    setSyncStatus('err','Error al guardar');
+  }
+}
+
+async function loadFromSheets(){
+  if(!SHEETS_URL){ loadFromLocal(); return; }
+  setSyncStatus('saving','Cargando...');
+  try {
+    const res = await fetch(SHEETS_URL + '?action=load');
+    const json = await res.json();
+    if(json && json.employees){
+      Object.assign(EMP, json.employees);
+      if(json.days) days = json.days.map(d=>({label:d.label,blocks:d.blocks.map(b=>({...b,id:uid()}))}));
+      if(json.rVi !== undefined) rVi=json.rVi;
+      if(json.rSab !== undefined) rSab=json.rSab;
+      if(json.rDom !== undefined) rDom=json.rDom;
+    }
+    setSyncStatus('ok','Sincronizado ✓');
+  } catch(e) {
+    setSyncStatus('err','Sin conexión — usando local');
+    loadFromLocal();
+  }
+  renderGrid();
+}
+
+function scheduleSave(){
+  if(saveTimer) clearTimeout(saveTimer);
+  saveToLocal();
+  setSyncStatus('saving','Guardando...');
+  saveTimer = setTimeout(()=>{ saveToSheets(); }, 1500);
+}
+
+// ─────────────────────────────────────────────
+// LOCALSTORAGE (backup local)
+// ─────────────────────────────────────────────
+function saveToLocal(){
+  try {
+    localStorage.setItem('horarios_emp', JSON.stringify(EMP));
+    localStorage.setItem('horarios_days', JSON.stringify(days.map(d=>({label:d.label,blocks:d.blocks}))));
+    localStorage.setItem('horarios_rot', JSON.stringify({rVi,rSab,rDom}));
+  } catch(e){}
+}
+
+function loadFromLocal(){
+  try {
+    const empData = localStorage.getItem('horarios_emp');
+    const daysData = localStorage.getItem('horarios_days');
+    const rotData = localStorage.getItem('horarios_rot');
+    if(empData){ const saved = JSON.parse(empData); Object.keys(saved).forEach(k=>{ EMP[k]=saved[k]; }); }
+    if(daysData){ const saved = JSON.parse(daysData); days = saved.map(d=>({label:d.label,blocks:d.blocks.map(b=>({...b,id:uid()}))})); }
+    if(rotData){ const r=JSON.parse(rotData); rVi=r.rVi||0; rSab=r.rSab||0; rDom=r.rDom||0; }
+    if(daysData || empData) setSyncStatus('ok','Cargado desde local');
+  } catch(e){}
+}
+
+// ─────────────────────────────────────────────
+// DATOS
+// ─────────────────────────────────────────────
 const DAYS=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 const START_H=6, SLOTS=(30-START_H)*2;
-const EMP={
-  Gonzalo:{color:'#5DB87A',bg:'#E6F5EE',text:'#0A5C38',area:'Cantina'},
-  Daniela:{color:'#E07A5A',bg:'#FEEEE9',text:'#7A2E18',area:'Cantina'},
-  Erik:   {color:'#3BAAA0',bg:'#E3F5F4',text:'#0A4C48',area:'Cantina'},
-  Cesar:  {color:'#E0A429',bg:'#FEF3E2',text:'#7A4A08',area:'Cantina'},
-  Oscar:  {color:'#4A7FD4',bg:'#E8F0FB',text:'#1A4A8A',area:'Mantenimiento'},
-  William:{color:'#3C3489',bg:'#EFECFC',text:'#3D2E9C',area:'Mantenimiento'},
-  Miguel: {color:'#1D9E75',bg:'#E1F5EE',text:'#085041',area:'Mantenimiento'},
-  Felipe: {color:'#378ADD',bg:'#DEEDFB',text:'#0C447C',area:'Sereno'},
-  'Ser.Sáb':{color:'#888780',bg:'#F1EFE8',text:'#2C2C2A',area:'Sereno'},
+
+const AREA_COLORS = {
+  Cantina:      {color:'#2563EB', bg:'#DBEAFE', text:'#1E3A8A'},
+  Mantenimiento:{color:'#16A34A', bg:'#DCFCE7', text:'#14532D'},
+  Seguridad:    {color:'#DC2626', bg:'#FEE2E2', text:'#7F1D1D'},
+  Encargado:    {color:'#6B7280', bg:'#F3F4F6', text:'#1F2937'},
 };
-const AREA_STYLE={
-  Cantina:{bg:'#E6F5EE',text:'#0A5C38'},
-  Mantenimiento:{bg:'#E8F0FB',text:'#1A4A8A'},
-  Sereno:{bg:'#EFECFC',text:'#3D2E9C'}
-};
+
+// EMP: nombre -> { area, color, bg, text }
+let EMP = {};
+
+function makeEmpEntry(area){
+  const c = AREA_COLORS[area] || AREA_COLORS.Cantina;
+  return { area, color:c.color, bg:c.bg, text:c.text };
+}
+
+// Empleados iniciales
+const INITIAL_EMPS = [
+  {name:'Gonzalo',  area:'Cantina'},
+  {name:'Daniela',  area:'Cantina'},
+  {name:'Erik',     area:'Cantina'},
+  {name:'Cesar',    area:'Cantina'},
+  {name:'Oscar',    area:'Mantenimiento'},
+  {name:'William',  area:'Mantenimiento'},
+  {name:'Miguel',   area:'Mantenimiento'},
+  {name:'Felipe',   area:'Seguridad'},
+  {name:'Ser.Sáb',  area:'Seguridad'},
+];
+INITIAL_EMPS.forEach(e=>{ EMP[e.name] = makeEmpEntry(e.area); });
 
 function ps(str){
   let [h,m]=str.split(':').map(Number);
@@ -257,26 +480,120 @@ let days=[
   {label:'Domingo',blocks:mkB(DOM[0])},
 ];
 
-// group blocks by name, stacking multiple blocks of same person in same column
-function groupBlocks(blocks){
-  // each unique name gets a column; multiple blocks of same name go in same column
-  const order=[];
-  const map={};
-  blocks.forEach(b=>{
-    if(!map[b.name]){map[b.name]=[];order.push(b.name);}
-    map[b.name].push(b);
+// ─────────────────────────────────────────────
+// GESTIÓN EMPLEADOS
+// ─────────────────────────────────────────────
+let editingEmpOldName = null;
+let deletingEmpName = null;
+
+function openEmpMgmt(){
+  renderEmpMgmtList();
+  document.getElementById('new-emp-name').value = '';
+  document.getElementById('modal-emp-bg').classList.add('open');
+}
+function closeEmpMgmt(){document.getElementById('modal-emp-bg').classList.remove('open');}
+
+function renderEmpMgmtList(){
+  const list = document.getElementById('emp-mgmt-list');
+  list.innerHTML = '';
+  Object.keys(EMP).forEach(name=>{
+    const emp = EMP[name];
+    const c = AREA_COLORS[emp.area] || AREA_COLORS.Cantina;
+    const item = document.createElement('div');
+    item.className = 'emp-item';
+    item.innerHTML = `
+      <div class="emp-item-dot" style="background:${c.color}"></div>
+      <span class="emp-item-name">${name}</span>
+      <span class="emp-item-area">${emp.area}</span>
+      <div class="emp-item-actions">
+        <button class="emp-action-btn" onclick="openEditEmp('${name}')">✏️ Editar</button>
+        <button class="emp-action-btn emp-action-del" onclick="openDelEmp('${name}')">🗑️ Eliminar</button>
+      </div>`;
+    list.appendChild(item);
   });
+}
+
+function addEmployee(){
+  const name = document.getElementById('new-emp-name').value.trim();
+  const area = document.getElementById('new-emp-area').value;
+  if(!name){ alert('Ingresá un nombre.'); return; }
+  if(EMP[name]){ alert('Ya existe un empleado con ese nombre.'); return; }
+  EMP[name] = makeEmpEntry(area);
+  renderEmpMgmtList();
+  document.getElementById('new-emp-name').value = '';
+  renderGrid();
+  scheduleSave();
+}
+
+function openEditEmp(name){
+  editingEmpOldName = name;
+  document.getElementById('edit-emp-name').value = name;
+  document.getElementById('edit-emp-area').value = EMP[name].area;
+  document.getElementById('modal-edit-emp-bg').classList.add('open');
+}
+function closeEditEmp(){
+  editingEmpOldName = null;
+  document.getElementById('modal-edit-emp-bg').classList.remove('open');
+}
+function confirmEditEmp(){
+  const newName = document.getElementById('edit-emp-name').value.trim();
+  const newArea = document.getElementById('edit-emp-area').value;
+  if(!newName){ alert('El nombre no puede estar vacío.'); return; }
+  if(newName !== editingEmpOldName && EMP[newName]){ alert('Ya existe un empleado con ese nombre.'); return; }
+
+  // Update EMP
+  const oldEntry = EMP[editingEmpOldName];
+  delete EMP[editingEmpOldName];
+  EMP[newName] = makeEmpEntry(newArea);
+
+  // Update all blocks in days
+  if(newName !== editingEmpOldName){
+    days.forEach(d=>d.blocks.forEach(b=>{ if(b.name===editingEmpOldName) b.name=newName; }));
+  }
+
+  closeEditEmp();
+  renderEmpMgmtList();
+  renderGrid();
+  scheduleSave();
+}
+
+function openDelEmp(name){
+  deletingEmpName = name;
+  document.getElementById('del-emp-name-label').textContent = name;
+  document.getElementById('modal-del-emp-bg').classList.add('open');
+}
+function closeDelEmp(){
+  deletingEmpName = null;
+  document.getElementById('modal-del-emp-bg').classList.remove('open');
+}
+function confirmDelEmp(){
+  if(!deletingEmpName) return;
+  delete EMP[deletingEmpName];
+  days.forEach(d=>{ d.blocks = d.blocks.filter(b=>b.name!==deletingEmpName); });
+  closeDelEmp();
+  renderEmpMgmtList();
+  renderGrid();
+  scheduleSave();
+}
+
+// ─────────────────────────────────────────────
+// GRILLA
+// ─────────────────────────────────────────────
+function groupBlocks(blocks){
+  const order=[];const map={};
+  blocks.forEach(b=>{if(!map[b.name]){map[b.name]=[];order.push(b.name);}map[b.name].push(b);});
   return {order,map};
 }
 
 let selBlock=null,curBlock=null,curDayIdx=-1,dragging=null;
+const SLOT_H = 26; // px per 30-min slot
 
 function renderGrid(){
   const tc=document.getElementById('timecol');
   tc.innerHTML='';
   for(let i=0;i<SLOTS;i++){
     const t=(i+START_H*2)*30,h=Math.floor(t/60),m=t%60;
-    tc.innerHTML+=`<div class="time-label">${m===0?String(h%24).padStart(2,'0')+':00':''}</div>`;
+    tc.innerHTML+=`<div class="time-label" style="height:${SLOT_H}px;line-height:${SLOT_H}px">${m===0?String(h%24).padStart(2,'0')+':00':''}</div>`;
   }
 
   const da=document.getElementById('daysarea');
@@ -285,60 +602,73 @@ function renderGrid(){
   days.forEach((day,di)=>{
     const dc=document.createElement('div');
     dc.className='day-col';
-
-    // header with + button
     const hdr=document.createElement('div');
     hdr.className='day-hdr';
     hdr.innerHTML=`<span>${day.label.slice(0,3)}</span>`;
     const addBtn=document.createElement('button');
-    addBtn.className='add-day-btn';
-    addBtn.title='Agregar turno';
-    addBtn.textContent='+';
+    addBtn.className='add-day-btn';addBtn.title='Agregar turno';addBtn.textContent='+';
     addBtn.addEventListener('click',e=>{e.stopPropagation();openModal(di);});
     hdr.appendChild(addBtn);
     dc.appendChild(hdr);
 
-    // rows container
     const rowsDiv=document.createElement('div');
     rowsDiv.className='col-rows';
-    rowsDiv.style.height=(SLOTS*20)+'px';
+    rowsDiv.style.height=(SLOTS*SLOT_H)+'px';
     rowsDiv.style.position='relative';
 
-    // hour lines
     for(let i=0;i<SLOTS;i++){
       const line=document.createElement('div');
       line.className='hour-line'+(i%2===0?' full':'');
-      line.style.top=(i*20)+'px';
+      line.style.top=(i*SLOT_H)+'px';
       rowsDiv.appendChild(line);
     }
 
-    // blocks grouped by name
     const {order,map}=groupBlocks(day.blocks);
     const colsDiv=document.createElement('div');
     colsDiv.className='col-inner';
-    colsDiv.style.cssText=`position:absolute;top:0;left:2px;right:2px;height:${SLOTS*20}px;`;
+    colsDiv.style.cssText=`position:absolute;top:0;left:3px;right:3px;height:${SLOTS*SLOT_H}px;`;
 
     order.forEach(name=>{
       const c=EMP[name]||{bg:'#ddd',text:'#333'};
       const pcol=document.createElement('div');
       pcol.className='pcol';
-      pcol.style.height=(SLOTS*20)+'px';
+      pcol.style.height=(SLOTS*SLOT_H)+'px';
       pcol.style.position='relative';
 
       map[name].forEach(b=>{
         const s=Math.max(0,b.s), e=Math.min(SLOTS,b.e);
         if(e<=s) return;
+        const blockH = (e-s)*SLOT_H;
         const div=document.createElement('div');
         div.className='block'+(selBlock&&selBlock.id===b.id?' selected':'');
-        div.style.cssText=`top:${s*20}px;height:${(e-s)*20}px;background:${c.bg};color:${c.text};`;
+        div.style.cssText=`top:${s*SLOT_H}px;height:${blockH}px;background:${c.bg};color:${c.text};border-color:${c.color}40;`;
 
         const th=document.createElement('div');th.className='dhandle top';
         th.addEventListener('mousedown',ev=>{ev.stopPropagation();startDrag(ev,b,'top',di);});
         const bh=document.createElement('div');bh.className='dhandle bottom';
         bh.addEventListener('mousedown',ev=>{ev.stopPropagation();startDrag(ev,b,'bottom',di);});
 
-        const sp=document.createElement('span');sp.textContent=name;
-        div.appendChild(th);div.appendChild(sp);div.appendChild(bh);
+        const nameEl=document.createElement('div');
+        // Use vertical text when block is short (less than 3 slots = 78px)
+        if(blockH < 78){
+          nameEl.className='block-name vertical';
+        } else {
+          nameEl.className='block-name';
+        }
+        nameEl.textContent=name;
+
+        div.appendChild(th);
+        div.appendChild(nameEl);
+
+        // Show time if block is tall enough
+        if(blockH >= 52){
+          const timeEl=document.createElement('div');
+          timeEl.className='block-time';
+          timeEl.textContent=`${fmtD(b.s)}–${fmtD(b.e)}`;
+          div.appendChild(timeEl);
+        }
+
+        div.appendChild(bh);
 
         div.addEventListener('click',ev=>{ev.stopPropagation();openEditor(b,day.label,name,div,di);});
         div.addEventListener('mouseenter',ev=>{
@@ -362,14 +692,23 @@ function renderGrid(){
   document.getElementById('rot-note').textContent=
     `Viernes: turno temprano → ${days[4].blocks[0]?days[4].blocks[0].name:'–'} · Sáb ${rSab+1}/4 · Dom ${rDom+1}/4`;
 
-  // legend
+  // legend por área
   const leg=document.getElementById('legend');leg.innerHTML='';
-  const seen=new Set();
+  const seenAreas = new Set();
+  Object.values(EMP).forEach(emp=>{
+    if(!seenAreas.has(emp.area)){
+      seenAreas.add(emp.area);
+      const c = AREA_COLORS[emp.area]||AREA_COLORS.Cantina;
+      leg.innerHTML+=`<div class="leg"><div class="lsq" style="background:${c.bg};border:1.5px solid ${c.color}"></div>${emp.area}</div>`;
+    }
+  });
+  // también mostrar cada empleado activo
+  const seenEmp = new Set();
   days.forEach(d=>d.blocks.forEach(b=>{
-    if(!seen.has(b.name)&&EMP[b.name]){
-      seen.add(b.name);
+    if(!seenEmp.has(b.name)&&EMP[b.name]){
+      seenEmp.add(b.name);
       const c=EMP[b.name];
-      leg.innerHTML+=`<div class="leg"><div class="lsq" style="background:${c.bg};border:1px solid ${c.color}40"></div>${b.name}</div>`;
+      leg.innerHTML+=`<div class="leg"><div class="lsq" style="background:${c.bg};border:1px solid ${c.color}60"></div>${b.name}</div>`;
     }
   }));
 }
@@ -385,8 +724,8 @@ function openEditor(b,label,name,el,di){
   updEdDur();
   const r=el.getBoundingClientRect();
   let left=r.right+10,top=r.top;
-  if(left+220>window.innerWidth)left=r.left-228;
-  if(top+240>window.innerHeight)top=window.innerHeight-248;
+  if(left+240>window.innerWidth)left=r.left-248;
+  if(top+260>window.innerHeight)top=window.innerHeight-268;
   const ed=document.getElementById('editor');
   ed.style.left=left+'px';ed.style.top=top+'px';ed.style.display='block';
   renderGrid();
@@ -397,19 +736,19 @@ function applyEdit(){
   const iv=document.getElementById('ed-in').value,ov=document.getElementById('ed-out').value;
   if(iv){let[h,m]=iv.split(':').map(Number);if(h<START_H)h+=24;curBlock.s=(h-START_H)*2+(m/30);}
   if(ov){let[h,m]=ov.split(':').map(Number);if((h*60+m)<=(curBlock.s+START_H*2)*30)h+=24;curBlock.e=(h-START_H)*2+(m/30);}
-  updEdDur();renderGrid();
+  updEdDur();renderGrid();scheduleSave();
 }
 function shiftBlock(d){
   if(!curBlock)return;
   curBlock.s+=d;curBlock.e+=d;
   document.getElementById('ed-in').value=fmt(curBlock.s);
   document.getElementById('ed-out').value=fmt(curBlock.e);
-  updEdDur();renderGrid();
+  updEdDur();renderGrid();scheduleSave();
 }
 function deleteBlock(){
   if(!curBlock||curDayIdx<0)return;
   days[curDayIdx].blocks=days[curDayIdx].blocks.filter(b=>b.id!==curBlock.id);
-  closeEditor();
+  closeEditor();scheduleSave();
 }
 function closeEditor(){selBlock=null;curBlock=null;document.getElementById('editor').style.display='none';renderGrid();}
 document.addEventListener('click',()=>{if(selBlock){selBlock=null;curBlock=null;document.getElementById('editor').style.display='none';renderGrid();}});
@@ -424,7 +763,7 @@ function startDrag(ev,b,edge,di){
 }
 function onDrag(ev){
   if(!dragging)return;
-  const delta=Math.round((ev.clientY-dragging.startY)/20);
+  const delta=Math.round((ev.clientY-dragging.startY)/SLOT_H);
   if(dragging.edge==='top'){const ns=Math.max(0,dragging.origS+delta);if(ns<dragging.b.e-1)dragging.b.s=ns;}
   else{const ne=Math.min(SLOTS+12,dragging.origE+delta);if(ne>dragging.b.s+1)dragging.b.e=ne;}
   if(curBlock&&curBlock.id===dragging.b.id){
@@ -434,12 +773,17 @@ function onDrag(ev){
   }
   renderGrid();
 }
-function stopDrag(){dragging=null;document.removeEventListener('mousemove',onDrag);document.removeEventListener('mouseup',stopDrag);}
+function stopDrag(){
+  if(dragging) scheduleSave();
+  dragging=null;
+  document.removeEventListener('mousemove',onDrag);
+  document.removeEventListener('mouseup',stopDrag);
+}
 
 // ── ROTATIVOS ────────────────────────────────────────────────
-function rotVi(){rVi=(rVi+1)%2;days[4].blocks=mkB(VI[rVi]);closeEditor();renderGrid();}
-function rotSab(){rSab=(rSab+1)%4;days[5].blocks=mkB(SAB[rSab]);closeEditor();renderGrid();}
-function rotDom(){rDom=(rDom+1)%4;days[6].blocks=mkB(DOM[rDom]);closeEditor();renderGrid();}
+function rotVi(){rVi=(rVi+1)%2;days[4].blocks=mkB(VI[rVi]);closeEditor();renderGrid();scheduleSave();}
+function rotSab(){rSab=(rSab+1)%4;days[5].blocks=mkB(SAB[rSab]);closeEditor();renderGrid();scheduleSave();}
+function rotDom(){rDom=(rDom+1)%4;days[6].blocks=mkB(DOM[rDom]);closeEditor();renderGrid();scheduleSave();}
 
 // ── MODAL AGREGAR ────────────────────────────────────────────
 let modalDayIdx=-1;
@@ -449,7 +793,7 @@ function openModal(di){
   const sel=document.getElementById('modal-emp');
   sel.innerHTML='';
   Object.keys(EMP).forEach(name=>{
-    const opt=document.createElement('option');opt.value=name;opt.textContent=name;sel.appendChild(opt);
+    const opt=document.createElement('option');opt.value=name;opt.textContent=`${name} (${EMP[name].area})`;sel.appendChild(opt);
   });
   document.getElementById('modal-in').value='08:00';
   document.getElementById('modal-out').value='16:00';
@@ -468,21 +812,14 @@ function confirmAdd(){
   const s=(ih-START_H)*2+(im/30);
   const e=(oh-START_H)*2+(om/30);
   days[modalDayIdx].blocks.push({name,s,e,id:uid()});
-  closeModal();
-  renderGrid();
+  closeModal();renderGrid();scheduleSave();
 }
 document.getElementById('modal-bg').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.getElementById('modal-emp-bg').addEventListener('click',function(e){if(e.target===this)closeEmpMgmt();});
+document.getElementById('modal-edit-emp-bg').addEventListener('click',function(e){if(e.target===this)closeEditEmp();});
+document.getElementById('modal-del-emp-bg').addEventListener('click',function(e){if(e.target===this)closeDelEmp();});
 
 // ── FICHAS ────────────────────────────────────────────────────
-// Build schedule from current grid state
-function getSchedFromGrid(name){
-  return days.map(day=>{
-    const blocks=day.blocks.filter(b=>b.name===name);
-    if(blocks.length===0) return null;
-    return blocks;
-  });
-}
-
 function calcTotalFromGrid(name){
   let t=0;
   days.forEach(day=>{day.blocks.filter(b=>b.name===name).forEach(b=>{t+=hrsN(b.s,b.e);});});
@@ -541,7 +878,8 @@ function copyText(text,btnId){
 let activeEmp='summary';
 
 function renderFicha(name){
-  const emp=EMP[name],as=AREA_STYLE[emp.area];
+  const emp=EMP[name];
+  const c=AREA_COLORS[emp.area]||AREA_COLORS.Cantina;
   const msg=buildMsg(name),initials=name.slice(0,2).toUpperCase();
   let rows='';
   days.forEach(day=>{
@@ -557,8 +895,8 @@ function renderFicha(name){
   const mid='copy-'+name;
   document.getElementById('ficha-content').innerHTML=`<div class="card">
     <div class="card-hdr">
-      <div class="avatar" style="background:${emp.bg};color:${emp.text}">${initials}</div>
-      <div class="card-hdr-info"><h2>${name}</h2><span class="badge" style="background:${as.bg};color:${as.text}">${emp.area}</span></div>
+      <div class="avatar" style="background:${c.bg};color:${c.text}">${initials}</div>
+      <div class="card-hdr-info"><h2>${name}</h2><span class="badge" style="background:${c.bg};color:${c.text}">${emp.area}</span></div>
     </div>
     <div>${rows}</div>
     <div class="total-bar"><span>Total horas / semana</span><span>${calcTotalFromGrid(name)} hs</span></div>
@@ -571,16 +909,17 @@ function renderFicha(name){
 }
 
 function renderResumen(){
-  const names=Object.keys(EMP).filter(n=>n!=='Ser.Sáb'&&days.some(d=>d.blocks.some(b=>b.name===n)));
+  const names=Object.keys(EMP).filter(n=>days.some(d=>d.blocks.some(b=>b.name===n)));
   let rows='';
   names.forEach(name=>{
-    const emp=EMP[name],as=AREA_STYLE[emp.area];
+    const emp=EMP[name];
+    const c=AREA_COLORS[emp.area]||AREA_COLORS.Cantina;
     const cells=days.map(day=>{
       const blocks=day.blocks.filter(b=>b.name===name).sort((a,b)=>a.s-b.s);
       if(blocks.length===0) return`<td><span style="color:var(--faint);font-size:11px;font-style:italic">Franco</span></td>`;
       return`<td style="font-size:10px;font-family:'DM Mono',monospace">${blocks.map(b=>`${fmtD(b.s)}<br>${fmtD(b.e)}`).join('<hr style="border:none;border-top:1px dashed var(--border);margin:2px 0">')}</td>`;
     }).join('');
-    rows+=`<tr><td><span class="emp-dot" style="background:${emp.color}"></span>${name}<br><span style="font-size:10px;font-weight:400;color:var(--muted)">${emp.area}</span></td>${cells}<td style="font-weight:500;text-align:right">${calcTotalFromGrid(name)} hs</td></tr>`;
+    rows+=`<tr><td><span class="emp-dot" style="background:${c.color}"></span>${name}<br><span style="font-size:10px;font-weight:400;color:var(--muted)">${emp.area}</span></td>${cells}<td style="font-weight:500;text-align:right">${calcTotalFromGrid(name)} hs</td></tr>`;
   });
   const txt=buildSummary();
   document.getElementById('resumen-content').innerHTML=`<div class="card">
@@ -602,8 +941,9 @@ function initFichas(){
   const names=Object.keys(EMP).filter(n=>n!=='Ser.Sáb');
   names.forEach(name=>{
     const emp=EMP[name];
+    const c=AREA_COLORS[emp.area]||AREA_COLORS.Cantina;
     const t=document.createElement('button');t.className='etab';t.dataset.name=name;
-    t.innerHTML=`<span class="dot" style="background:${emp.color}"></span>${name}`;
+    t.innerHTML=`<span class="dot" style="background:${c.color}"></span>${name}`;
     t.onclick=()=>{activeEmp=name;refreshEmpTabs();renderFicha(name);};
     tabs.appendChild(t);
   });
@@ -623,7 +963,10 @@ function showView(id,btn){
   if(id==='resumen')renderResumen();
 }
 
+// ── INIT ─────────────────────────────────────
+loadFromLocal();
 renderGrid();
+if(SHEETS_URL){ loadFromSheets(); } else { setSyncStatus('','Sin configurar'); }
 </script>
 </body>
 </html>
