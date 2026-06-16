@@ -340,7 +340,7 @@ header p{font-size:13px;color:var(--muted);}
 // ─────────────────────────────────────────────
 // CONFIGURACIÓN GOOGLE SHEETS
 // ─────────────────────────────────────────────
-let SHEETS_URL = localStorage.getItem('sheets_url') || 'https://script.google.com/macros/s/AKfycbwfE84Lg_FkKWt6Ew-aahTawWVGgF_a5-4KxW5CfEToXiyHJP7m9_6bPcZbO9Pg6RfEVg/exec';
+let SHEETS_URL = localStorage.getItem('sheets_url') || 'https://script.google.com/macros/s/AKfycbwymRf8HgAi-qAAeqbuU_12hxK6btgyGoP29zmnVgCZUgRyolZIXrCw-z2RIX-UWyZAAQ/exec';
 let saveTimer = null;
 
 function showBanner(id){
@@ -399,8 +399,8 @@ async function saveToSheets(){
   }
 }
 
-async function loadFromSheets(){
-  // Primero cargar local (o datos iniciales) y mostrar la grilla de inmediato
+function loadFromSheets(){
+  // Primero cargar local y mostrar grilla de inmediato
   loadFromLocal();
   renderGrid();
 
@@ -411,34 +411,53 @@ async function loadFromSheets(){
     return; 
   }
 
-  // Luego sincronizar con Sheets en segundo plano
   setSyncStatus('saving','Sincronizando...');
   hideBanner('config-banner');
   hideBanner('error-banner');
-  try {
-    const res = await fetch(SHEETS_URL + '?action=load', {
-      method: 'GET',
-      redirect: 'follow'
-    });
-    const text = await res.text();
-    const json = JSON.parse(text);
-    if(json && json.employees && Object.keys(json.employees).length>0){
-      Object.keys(EMP).forEach(k=>delete EMP[k]);
-      Object.assign(EMP, json.employees);
-      if(json.days) days = json.days.map(d=>({label:d.label,blocks:d.blocks.map(b=>({...b,id:uid()}))}));
-      if(json.rVi !== undefined) rVi=json.rVi;
-      if(json.rSab !== undefined) rSab=json.rSab;
-      if(json.rDom !== undefined) rDom=json.rDom;
-      saveToLocal();
-      renderGrid();
-    }
-    setSyncStatus('ok','Sincronizado ✓');
-  } catch(e) {
-    // CORS error es normal con Apps Script desde GitHub Pages en el GET.
-    // Los datos locales ya están cargados, así que no mostramos error alarmante.
+
+  // JSONP: único método que evita CORS con Apps Script desde cualquier dispositivo
+  const cbName = 'jsonpCb_' + Date.now();
+  const script = document.createElement('script');
+  const timeout = setTimeout(()=>{
+    // Si tarda más de 8 segundos, usamos datos locales sin mostrar error
+    cleanup();
     setSyncStatus('ok','Datos locales ✓');
+    hideOverlay();
+  }, 8000);
+
+  function cleanup(){
+    delete window[cbName];
+    if(script.parentNode) script.parentNode.removeChild(script);
+    clearTimeout(timeout);
   }
-  hideOverlay();
+
+  window[cbName] = function(json){
+    cleanup();
+    try {
+      if(json && json.employees && Object.keys(json.employees).length>0){
+        Object.keys(EMP).forEach(k=>delete EMP[k]);
+        Object.assign(EMP, json.employees);
+        if(json.days) days = json.days.map(d=>({label:d.label,blocks:d.blocks.map(b=>({...b,id:uid()}))}));
+        if(json.rVi !== undefined) rVi=json.rVi;
+        if(json.rSab !== undefined) rSab=json.rSab;
+        if(json.rDom !== undefined) rDom=json.rDom;
+        saveToLocal();
+        renderGrid();
+      }
+      setSyncStatus('ok','Sincronizado ✓');
+    } catch(e){
+      setSyncStatus('ok','Datos locales ✓');
+    }
+    hideOverlay();
+  };
+
+  script.src = SHEETS_URL + '?action=load&callback=' + cbName;
+  script.onerror = function(){
+    cleanup();
+    setSyncStatus('ok','Datos locales ✓');
+    hideOverlay();
+  };
+  document.head.appendChild(script);
 }
 
 function scheduleSave(){
