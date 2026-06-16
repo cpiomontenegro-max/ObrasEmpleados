@@ -399,7 +399,7 @@ async function saveToSheets(){
   }
 }
 
-function loadFromSheets(){
+async function loadFromSheets(){
   // Primero cargar local y mostrar grilla de inmediato
   loadFromLocal();
   renderGrid();
@@ -415,49 +415,27 @@ function loadFromSheets(){
   hideBanner('config-banner');
   hideBanner('error-banner');
 
-  // JSONP: único método que evita CORS con Apps Script desde cualquier dispositivo
-  const cbName = 'jsonpCb_' + Date.now();
-  const script = document.createElement('script');
-  const timeout = setTimeout(()=>{
-    // Si tarda más de 8 segundos, usamos datos locales sin mostrar error
-    cleanup();
-    setSyncStatus('ok','Datos locales ✓');
-    hideOverlay();
-  }, 8000);
-
-  function cleanup(){
-    delete window[cbName];
-    if(script.parentNode) script.parentNode.removeChild(script);
-    clearTimeout(timeout);
-  }
-
-  window[cbName] = function(json){
-    cleanup();
-    try {
-      if(json && json.employees && Object.keys(json.employees).length>0){
-        Object.keys(EMP).forEach(k=>delete EMP[k]);
-        Object.assign(EMP, json.employees);
-        if(json.days) days = json.days.map(d=>({label:d.label,blocks:d.blocks.map(b=>({...b,id:uid()}))}));
-        if(json.rVi !== undefined) rVi=json.rVi;
-        if(json.rSab !== undefined) rSab=json.rSab;
-        if(json.rDom !== undefined) rDom=json.rDom;
-        saveToLocal();
-        renderGrid();
-      }
+  // Usamos allorigins.win como proxy CORS — gratuito, sin configuración
+  const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(SHEETS_URL + '?action=load');
+  try {
+    const res = await fetch(proxy);
+    const outer = await res.json();
+    const json = JSON.parse(outer.contents);
+    if(json && json.employees && Object.keys(json.employees).length>0){
+      Object.keys(EMP).forEach(k=>delete EMP[k]);
+      Object.assign(EMP, json.employees);
+      if(json.days) days = json.days.map(d=>({label:d.label,blocks:d.blocks.map(b=>({...b,id:uid()}))}));
+      if(json.rVi !== undefined) rVi=json.rVi;
+      if(json.rSab !== undefined) rSab=json.rSab;
+      if(json.rDom !== undefined) rDom=json.rDom;
+      saveToLocal();
+      renderGrid();
       setSyncStatus('ok','Sincronizado ✓');
-    } catch(e){
-      setSyncStatus('ok','Datos locales ✓');
     }
-    hideOverlay();
-  };
-
-  script.src = SHEETS_URL + '?action=load&callback=' + cbName;
-  script.onerror = function(){
-    cleanup();
+  } catch(e) {
     setSyncStatus('ok','Datos locales ✓');
-    hideOverlay();
-  };
-  document.head.appendChild(script);
+  }
+  hideOverlay();
 }
 
 function scheduleSave(){
