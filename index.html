@@ -226,8 +226,10 @@ header p{font-size:13px;color:var(--muted);}
 <div class="editor" id="editor">
   <button class="ed-close" onclick="closeEditor()">✕</button>
   <h3 id="ed-title"></h3>
-  <label>Entrada</label><input type="time" id="ed-in" step="1800" oninput="applyEdit()">
-  <label>Salida</label><input type="time" id="ed-out" step="1800" oninput="applyEdit()">
+  <label>Entrada</label>
+  <select id="ed-in" onchange="applyEdit()" style="font-size:13px;font-family:'DM Mono',monospace;padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg);color:var(--text);width:100%;margin-bottom:10px;"></select>
+  <label>Salida</label>
+  <select id="ed-out" onchange="applyEdit()" style="font-size:13px;font-family:'DM Mono',monospace;padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--bg);color:var(--text);width:100%;margin-bottom:10px;"></select>
   <p class="ed-dur" id="ed-dur"></p>
   <div class="ed-row">
     <button onclick="shiftBlock(-1)">− 30 min</button>
@@ -373,7 +375,7 @@ async function saveToSheets(){
   try {
     const payload = { employees: EMP, days: days.map(d=>({label:d.label,blocks:d.blocks})), rVi, rSab, rDom };
     await fetch(BIN_URL, {
-      method:'PUT',
+      method:'PUT',mode:'cors',
       headers:{'Content-Type':'application/json','X-Master-Key':BIN_KEY},
       body: JSON.stringify(payload)
     });
@@ -388,7 +390,7 @@ async function loadFromSheets(){
   renderGrid();
   setSyncStatus('saving','Sincronizando...');
   try {
-    const res = await fetch(BIN_URL);
+    const res = await fetch(BIN_URL + '?t=' + Date.now());
     const outer = await res.json();
     const json = outer.record;
     if(json && json.employees && Object.keys(json.employees).length>0){
@@ -756,33 +758,58 @@ function renderGrid(){
 function posTip(ev){const t=document.getElementById('tip');t.style.left=(ev.clientX+14)+'px';t.style.top=(ev.clientY-10)+'px';}
 
 // ── EDITOR ────────────────────────────────────────────────────
+function buildTimeOptions(selectId, selectedVal){
+  const sel = document.getElementById(selectId);
+  sel.innerHTML = '';
+  for(let s=0; s<=SLOTS+12; s++){
+    const t=(s+START_H*2)*30, h=Math.floor(t/60), m=t%60;
+    const display = String(h%24).padStart(2,'0')+':'+String(m).padStart(2,'0');
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = display;
+    if(s===selectedVal) opt.selected=true;
+    sel.appendChild(opt);
+  }
+}
+
 function openEditor(b,label,name,el,di){
   selBlock=b;curBlock=b;curDayIdx=di;
   document.getElementById('ed-title').textContent=`${name} — ${label}`;
-  document.getElementById('ed-in').value=fmt(b.s);
-  document.getElementById('ed-out').value=fmt(b.e);
+  buildTimeOptions('ed-in', b.s);
+  buildTimeOptions('ed-out', b.e);
   updEdDur();
   const r=el.getBoundingClientRect();
-  let left=r.right+10,top=r.top;
-  if(left+240>window.innerWidth)left=r.left-248;
-  if(top+260>window.innerHeight)top=window.innerHeight-268;
   const ed=document.getElementById('editor');
-  ed.style.left=left+'px';ed.style.top=top+'px';ed.style.display='block';
+  if(window.innerWidth < 600){
+    // Móvil: centrar en pantalla
+    ed.style.left='50%';
+    ed.style.top='50%';
+    ed.style.transform='translate(-50%,-50%)';
+    ed.style.position='fixed';
+  } else {
+    ed.style.transform='';
+    let left=r.right+10,top=r.top;
+    if(left+240>window.innerWidth)left=r.left-248;
+    if(top+260>window.innerHeight)top=window.innerHeight-268;
+    ed.style.left=left+'px';ed.style.top=top+'px';
+  }
+  ed.style.display='block';
   renderGrid();
 }
 function updEdDur(){if(!curBlock)return;document.getElementById('ed-dur').textContent=`Duración: ${hrsStr(curBlock.s,curBlock.e)} hs`;}
 function applyEdit(){
   if(!curBlock)return;
-  const iv=document.getElementById('ed-in').value,ov=document.getElementById('ed-out').value;
-  if(iv){let[h,m]=iv.split(':').map(Number);if(h<START_H)h+=24;curBlock.s=(h-START_H)*2+(m/30);}
-  if(ov){let[h,m]=ov.split(':').map(Number);if((h*60+m)<=(curBlock.s+START_H*2)*30)h+=24;curBlock.e=(h-START_H)*2+(m/30);}
+  const iv=parseInt(document.getElementById('ed-in').value);
+  const ov=parseInt(document.getElementById('ed-out').value);
+  if(!isNaN(iv)) curBlock.s=iv;
+  if(!isNaN(ov) && ov>curBlock.s) curBlock.e=ov;
   updEdDur();renderGrid();scheduleSave();
 }
 function shiftBlock(d){
   if(!curBlock)return;
   curBlock.s+=d;curBlock.e+=d;
-  document.getElementById('ed-in').value=fmt(curBlock.s);
-  document.getElementById('ed-out').value=fmt(curBlock.e);
+  document.getElementById('ed-in').value=curBlock.s;
+  document.getElementById('ed-out').value=curBlock.e;
   updEdDur();renderGrid();scheduleSave();
 }
 function deleteBlock(){
