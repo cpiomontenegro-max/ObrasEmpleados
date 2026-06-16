@@ -149,6 +149,22 @@ header p{font-size:13px;color:var(--muted);}
 .sync-dot.saving{background:#E0A429;animation:pulse 1s infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
+/* LOADING OVERLAY */
+#loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .3s;}
+#loading-overlay.hidden{opacity:0;pointer-events:none;}
+.loading-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-msg{font-size:14px;color:var(--muted);}
+
+/* BANNER AVISO */
+#config-banner{background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:none;align-items:center;gap:10px;font-size:13px;color:#92400E;}
+#config-banner.show{display:flex;}
+#config-banner button{margin-left:auto;padding:6px 14px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid #F59E0B;border-radius:8px;background:#FFFBEB;color:#92400E;cursor:pointer;white-space:nowrap;}
+#config-banner button:hover{background:#FEF3C7;}
+#error-banner{background:#FEE2E2;border:1px solid #FCA5A5;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:none;align-items:center;gap:10px;font-size:13px;color:#7F1D1D;}
+#error-banner.show{display:flex;}
+#error-banner button{margin-left:auto;padding:6px 14px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid #F87171;border-radius:8px;background:#FFF5F5;color:#7F1D1D;cursor:pointer;white-space:nowrap;}
+
 /* AREA LEGEND BADGES */
 .area-badge-cantina{background:var(--cat-bg);color:var(--cat-text);}
 .area-badge-mantenimiento{background:var(--mant-bg);color:var(--mant-text);}
@@ -163,10 +179,18 @@ header p{font-size:13px;color:var(--muted);}
       <p id="header-subtitle">Cantina · Mantenimiento · Seguridad · Encargado</p>
     </div>
     <div class="header-actions">
-      <div class="sync-status" id="sync-status" onclick="openSheetsModal()" title="Configurar Google Sheets" style="cursor:pointer;"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Sin guardar</span> ⚙️</div>
+      <div class="sync-status" id="sync-status" onclick="openSheetsModal()" title="Configurar sincronización con Google Sheets" style="cursor:pointer;"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Cargando...</span> ⚙️</div>
       <button class="mgmt-btn" onclick="openEmpMgmt()">👥 Empleados</button>
     </div>
   </header>
+  <div id="config-banner">
+    ⚠️ <strong>Sin sincronización.</strong> Configurá Google Sheets para que los horarios se guarden y estén disponibles en todos los dispositivos.
+    <button onclick="openSheetsModal()">⚙️ Configurar ahora</button>
+  </div>
+  <div id="error-banner">
+    ❌ <strong>Error al conectar con Google Sheets.</strong> Se cargaron los datos locales de este dispositivo.
+    <button onclick="loadFromSheets()">↺ Reintentar</button>
+  </div>
   <nav class="nav">
     <button class="nav-btn active" onclick="showView('grilla',this)">Grilla visual</button>
     <button class="nav-btn" onclick="showView('fichas',this)">Fichas por empleado</button>
@@ -302,6 +326,22 @@ header p{font-size:13px;color:var(--muted);}
   </div>
 </div>
 
+<!-- OVERLAY CARGA -->
+<div id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <p class="loading-msg" id="loading-msg">Cargando horarios...</p>
+</div>
+
+<!-- BANNERS -->
+<div id="config-banner">
+  ⚠️ Los horarios no están sincronizados. Configurá Google Sheets para guardar entre dispositivos.
+  <button onclick="openSheetsModal()">Configurar ahora</button>
+</div>
+<div id="error-banner">
+  ❌ Error al conectar con Google Sheets. Los cambios se guardaron solo en este dispositivo.
+  <button onclick="loadFromSheets()">Reintentar</button>
+</div>
+
 <div class="tip" id="tip"></div>
 
 <script>
@@ -310,6 +350,17 @@ header p{font-size:13px;color:var(--muted);}
 // ─────────────────────────────────────────────
 let SHEETS_URL = localStorage.getItem('sheets_url') || '';
 let saveTimer = null;
+
+function showBanner(id){ document.getElementById(id).classList.add('show'); }
+function hideBanner(id){ document.getElementById(id).classList.remove('show'); }
+
+function showOverlay(msg){ 
+  document.getElementById('loading-overlay').classList.remove('hidden');
+  document.getElementById('loading-msg').textContent = msg || 'Cargando...';
+}
+function hideOverlay(){ 
+  document.getElementById('loading-overlay').classList.add('hidden');
+}
 
 function openSheetsModal(){
   document.getElementById('sheets-url-input').value = SHEETS_URL;
@@ -320,7 +371,8 @@ function saveSheetsUrl(){
   SHEETS_URL = document.getElementById('sheets-url-input').value.trim();
   localStorage.setItem('sheets_url', SHEETS_URL);
   closeSheetsModal();
-  if(SHEETS_URL) saveToSheets();
+  hideBanner('config-banner');
+  if(SHEETS_URL){ saveToSheets(); }
 }
 
 function setSyncStatus(state, msg){
@@ -331,8 +383,9 @@ function setSyncStatus(state, msg){
 }
 
 async function saveToSheets(){
-  if(!SHEETS_URL){ setSyncStatus('','Sin guardar'); return; }
+  if(!SHEETS_URL){ setSyncStatus('','Sin configurar'); showBanner('config-banner'); return; }
   setSyncStatus('saving','Guardando...');
+  hideBanner('error-banner');
   try {
     const payload = { employees: EMP, days: days.map(d=>({label:d.label,blocks:d.blocks})), rVi, rSab, rDom };
     await fetch(SHEETS_URL, {
@@ -344,28 +397,44 @@ async function saveToSheets(){
     setSyncStatus('ok','Guardado ✓');
   } catch(e) {
     setSyncStatus('err','Error al guardar');
+    showBanner('error-banner');
   }
 }
 
 async function loadFromSheets(){
-  if(!SHEETS_URL){ loadFromLocal(); return; }
+  if(!SHEETS_URL){ 
+    loadFromLocal(); 
+    renderGrid();
+    hideOverlay();
+    showBanner('config-banner');
+    setSyncStatus('','Sin configurar');
+    return; 
+  }
+  showOverlay('Sincronizando con Google Sheets...');
   setSyncStatus('saving','Cargando...');
+  hideBanner('config-banner');
+  hideBanner('error-banner');
   try {
     const res = await fetch(SHEETS_URL + '?action=load');
     const json = await res.json();
     if(json && json.employees){
+      // Reemplazar EMP completamente con los datos del servidor
+      Object.keys(EMP).forEach(k=>delete EMP[k]);
       Object.assign(EMP, json.employees);
       if(json.days) days = json.days.map(d=>({label:d.label,blocks:d.blocks.map(b=>({...b,id:uid()}))}));
       if(json.rVi !== undefined) rVi=json.rVi;
       if(json.rSab !== undefined) rSab=json.rSab;
       if(json.rDom !== undefined) rDom=json.rDom;
+      saveToLocal(); // actualizar backup local con datos frescos
     }
     setSyncStatus('ok','Sincronizado ✓');
   } catch(e) {
-    setSyncStatus('err','Sin conexión — usando local');
-    loadFromLocal();
+    setSyncStatus('err','Sin conexión');
+    showBanner('error-banner');
+    loadFromLocal(); // fallback a local solo si falla
   }
   renderGrid();
+  hideOverlay();
 }
 
 function scheduleSave(){
@@ -964,9 +1033,9 @@ function showView(id,btn){
 }
 
 // ── INIT ─────────────────────────────────────
-loadFromLocal();
-renderGrid();
-if(SHEETS_URL){ loadFromSheets(); } else { setSyncStatus('','Sin configurar'); }
+// Siempre mostrar overlay y cargar desde Sheets (fuente de verdad).
+// Si no hay URL configurada, loadFromSheets() mostrará el banner de aviso.
+loadFromSheets();
 </script>
 </body>
 </html>
