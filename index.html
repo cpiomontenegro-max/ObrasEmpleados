@@ -338,9 +338,10 @@ header p{font-size:13px;color:var(--muted);}
 
 <script>
 // ─────────────────────────────────────────────
-// CONFIGURACIÓN GOOGLE SHEETS
+// CONFIGURACIÓN JSONBIN
 // ─────────────────────────────────────────────
-let SHEETS_URL = localStorage.getItem('sheets_url') || 'https://script.google.com/macros/s/AKfycbwymRf8HgAi-qAAeqbuU_12hxK6btgyGoP29zmnVgCZUgRyolZIXrCw-z2RIX-UWyZAAQ/exec';
+const BIN_URL = 'https://api.jsonbin.io/v3/b/6a30d0e1da38895dfec78f30';
+const BIN_KEY = '$2a$10$XdfWWlmdZvHWEHnwkRopRenSkJaN9LfHrjq.jBi2L32mQcspikfky';
 let saveTimer = null;
 
 function showBanner(id){
@@ -360,19 +361,6 @@ function hideOverlay(){
   document.getElementById('loading-overlay').classList.add('hidden');
 }
 
-function openSheetsModal(){
-  document.getElementById('sheets-url-input').value = SHEETS_URL;
-  document.getElementById('modal-sheets-bg').classList.add('open');
-}
-function closeSheetsModal(){document.getElementById('modal-sheets-bg').classList.remove('open');}
-function saveSheetsUrl(){
-  SHEETS_URL = document.getElementById('sheets-url-input').value.trim();
-  localStorage.setItem('sheets_url', SHEETS_URL);
-  closeSheetsModal();
-  hideBanner('config-banner');
-  if(SHEETS_URL){ saveToSheets(); }
-}
-
 function setSyncStatus(state, msg){
   const dot = document.getElementById('sync-dot');
   const txt = document.getElementById('sync-text');
@@ -381,87 +369,45 @@ function setSyncStatus(state, msg){
 }
 
 async function saveToSheets(){
-  if(!SHEETS_URL){ setSyncStatus('','Sin configurar'); showBanner('config-banner'); return; }
   setSyncStatus('saving','Guardando...');
-  hideBanner('error-banner');
   try {
     const payload = { employees: EMP, days: days.map(d=>({label:d.label,blocks:d.blocks})), rVi, rSab, rDom };
-    await fetch(SHEETS_URL, {
-      method:'POST',
-      mode:'no-cors',
-      headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({action:'save', data: payload})
+    await fetch(BIN_URL, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':BIN_KEY},
+      body: JSON.stringify(payload)
     });
     setSyncStatus('ok','Guardado ✓');
   } catch(e) {
     setSyncStatus('err','Error al guardar');
-    showBanner('error-banner');
   }
 }
 
-function loadFromSheets(){
+async function loadFromSheets(){
   loadFromLocal();
   renderGrid();
-
-  if(!SHEETS_URL){ 
-    hideOverlay();
-    showBanner('config-banner');
-    setSyncStatus('','Sin configurar');
-    return; 
-  }
-
   setSyncStatus('saving','Sincronizando...');
-
-  // Necesitamos la URL final tras la redirección de Google para que JSONP funcione
-  // La URL final de este Apps Script es siempre script.googleusercontent.com
-  const cbName = 'cb_' + Date.now();
-  let done = false;
-
-  window[cbName] = function(json){
-    done = true;
-    delete window[cbName];
-    try {
-      if(json && json.employees && Object.keys(json.employees).length>0){
-        Object.keys(EMP).forEach(k=>delete EMP[k]);
-        Object.assign(EMP, json.employees);
-        if(json.days) days = json.days.map(d=>({label:d.label,blocks:d.blocks.map(b=>({...b,id:uid()}))}));
-        if(json.rVi !== undefined) rVi=json.rVi;
-        if(json.rSab !== undefined) rSab=json.rSab;
-        if(json.rDom !== undefined) rDom=json.rDom;
-        saveToLocal();
-        renderGrid();
-        setSyncStatus('ok','Sincronizado ✓');
-      }
-    } catch(e){ setSyncStatus('ok','Datos locales ✓'); }
-    hideOverlay();
-  };
-
-  // Primero hacemos fetch normal para seguir la redirección y obtener la URL final
-  fetch(SHEETS_URL + '?action=load&callback=' + cbName)
-    .then(r => r.text())
-    .then(text => {
-      // Si el fetch funcionó (algunos navegadores lo permiten), ejecutamos directamente
-      if(!done){
-        try {
-          // El texto es "cbName({...})" — lo ejecutamos
-          const fn = new Function(cbName, text);
-          fn(window[cbName]);
-        } catch(e){
-          // Si no, intentamos JSONP con la URL final que nos dio el fetch (sin redirección)
-          const s = document.createElement('script');
-          s.src = SHEETS_URL + '?action=load&callback=' + cbName;
-          document.head.appendChild(s);
-          setTimeout(()=>{ if(!done){ done=true; delete window[cbName]; setSyncStatus('ok','Datos locales ✓'); hideOverlay(); }}, 6000);
-        }
-      }
-    })
-    .catch(()=>{
-      // CORS bloqueó el fetch — usamos JSONP puro
-      const s = document.createElement('script');
-      s.src = SHEETS_URL + '?action=load&callback=' + cbName;
-      document.head.appendChild(s);
-      setTimeout(()=>{ if(!done){ done=true; delete window[cbName]; setSyncStatus('ok','Datos locales ✓'); hideOverlay(); }}, 6000);
+  try {
+    const res = await fetch(BIN_URL + '/latest', {
+      headers:{'X-Master-Key':BIN_KEY}
     });
+    const outer = await res.json();
+    const json = outer.record;
+    if(json && json.employees && Object.keys(json.employees).length>0){
+      Object.keys(EMP).forEach(k=>delete EMP[k]);
+      Object.assign(EMP, json.employees);
+      if(json.days) days = json.days.map(d=>({label:d.label,blocks:d.blocks.map(b=>({...b,id:uid()}))}));
+      if(json.rVi !== undefined) rVi=json.rVi;
+      if(json.rSab !== undefined) rSab=json.rSab;
+      if(json.rDom !== undefined) rDom=json.rDom;
+      saveToLocal();
+      renderGrid();
+    }
+    setSyncStatus('ok','Sincronizado ✓');
+  } catch(e) {
+    setSyncStatus('err','Sin conexión');
+  }
+  hideOverlay();
 }
 
 function scheduleSave(){
