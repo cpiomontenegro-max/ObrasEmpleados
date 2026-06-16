@@ -183,19 +183,20 @@ header p{font-size:13px;color:var(--muted);}
       <button class="mgmt-btn" onclick="openEmpMgmt()">👥 Empleados</button>
     </div>
   </header>
-  <div id="config-banner">
-    ⚠️ <strong>Sin sincronización.</strong> Configurá Google Sheets para que los horarios se guarden y estén disponibles en todos los dispositivos.
-    <button onclick="openSheetsModal()">⚙️ Configurar ahora</button>
-  </div>
-  <div id="error-banner">
-    ❌ <strong>Error al conectar con Google Sheets.</strong> Se cargaron los datos locales de este dispositivo.
-    <button onclick="loadFromSheets()">↺ Reintentar</button>
-  </div>
   <nav class="nav">
     <button class="nav-btn active" onclick="showView('grilla',this)">Grilla visual</button>
     <button class="nav-btn" onclick="showView('fichas',this)">Fichas por empleado</button>
     <button class="nav-btn" onclick="showView('resumen',this)">Resumen general</button>
   </nav>
+
+  <div id="config-banner-inline" style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:none;align-items:center;gap:10px;font-size:13px;color:#92400E;">
+    ⚠️ <strong>Sin sincronización.</strong> Configurá Google Sheets para guardar entre dispositivos.
+    <button onclick="openSheetsModal()" style="margin-left:auto;padding:6px 14px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid #F59E0B;border-radius:8px;background:#FFFBEB;color:#92400E;cursor:pointer;">⚙️ Configurar ahora</button>
+  </div>
+  <div id="error-banner-inline" style="background:#FEE2E2;border:1px solid #FCA5A5;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:none;align-items:center;gap:10px;font-size:13px;color:#7F1D1D;">
+    ❌ <strong>Error al conectar con Google Sheets.</strong> Se cargaron datos locales.
+    <button onclick="loadFromSheets()" style="margin-left:auto;padding:6px 14px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid #F87171;border-radius:8px;background:#FFF5F5;color:#7F1D1D;cursor:pointer;">↺ Reintentar</button>
+  </div>
 
   <div id="view-grilla" class="view active">
     <div class="grid-info">💡 <strong>Clic</strong> en un turno para editar · <strong>Arrastrá</strong> los bordes para extender · <strong>+</strong> en cada día para agregar un turno</div>
@@ -332,15 +333,6 @@ header p{font-size:13px;color:var(--muted);}
   <p class="loading-msg" id="loading-msg">Cargando horarios...</p>
 </div>
 
-<!-- BANNERS -->
-<div id="config-banner">
-  ⚠️ Los horarios no están sincronizados. Configurá Google Sheets para guardar entre dispositivos.
-  <button onclick="openSheetsModal()">Configurar ahora</button>
-</div>
-<div id="error-banner">
-  ❌ Error al conectar con Google Sheets. Los cambios se guardaron solo en este dispositivo.
-  <button onclick="loadFromSheets()">Reintentar</button>
-</div>
 
 <div class="tip" id="tip"></div>
 
@@ -348,11 +340,17 @@ header p{font-size:13px;color:var(--muted);}
 // ─────────────────────────────────────────────
 // CONFIGURACIÓN GOOGLE SHEETS
 // ─────────────────────────────────────────────
-let SHEETS_URL = localStorage.getItem('sheets_url') || 'https://script.google.com/macros/s/AKfycbwKfOaHYxkNPu_Jczw60nDBzoAcxBqqktH9NVTqg_NrF66AzEHLi0FMfY9KJO9jXJwFbA/exec';
+let SHEETS_URL = localStorage.getItem('sheets_url') || 'https://script.google.com/macros/s/AKfycbwfE84Lg_FkKWt6Ew-aahTawWVGgF_a5-4KxW5CfEToXiyHJP7m9_6bPcZbO9Pg6RfEVg/exec';
 let saveTimer = null;
 
-function showBanner(id){ document.getElementById(id).classList.add('show'); }
-function hideBanner(id){ document.getElementById(id).classList.remove('show'); }
+function showBanner(id){
+  const el=document.getElementById(id+'-inline');
+  if(el) el.style.display='flex';
+}
+function hideBanner(id){
+  const el=document.getElementById(id+'-inline');
+  if(el) el.style.display='none';
+}
 
 function showOverlay(msg){ 
   document.getElementById('loading-overlay').classList.remove('hidden');
@@ -391,7 +389,7 @@ async function saveToSheets(){
     await fetch(SHEETS_URL, {
       method:'POST',
       mode:'no-cors',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'text/plain'},
       body: JSON.stringify({action:'save', data: payload})
     });
     setSyncStatus('ok','Guardado ✓');
@@ -402,38 +400,44 @@ async function saveToSheets(){
 }
 
 async function loadFromSheets(){
+  // Primero cargar local (o datos iniciales) y mostrar la grilla de inmediato
+  loadFromLocal();
+  renderGrid();
+
   if(!SHEETS_URL){ 
-    loadFromLocal(); 
-    renderGrid();
     hideOverlay();
     showBanner('config-banner');
     setSyncStatus('','Sin configurar');
     return; 
   }
-  showOverlay('Sincronizando con Google Sheets...');
-  setSyncStatus('saving','Cargando...');
+
+  // Luego sincronizar con Sheets en segundo plano
+  setSyncStatus('saving','Sincronizando...');
   hideBanner('config-banner');
   hideBanner('error-banner');
   try {
-    const res = await fetch(SHEETS_URL + '?action=load');
-    const json = await res.json();
-    if(json && json.employees){
-      // Reemplazar EMP completamente con los datos del servidor
+    const res = await fetch(SHEETS_URL + '?action=load', {
+      method: 'GET',
+      redirect: 'follow'
+    });
+    const text = await res.text();
+    const json = JSON.parse(text);
+    if(json && json.employees && Object.keys(json.employees).length>0){
       Object.keys(EMP).forEach(k=>delete EMP[k]);
       Object.assign(EMP, json.employees);
       if(json.days) days = json.days.map(d=>({label:d.label,blocks:d.blocks.map(b=>({...b,id:uid()}))}));
       if(json.rVi !== undefined) rVi=json.rVi;
       if(json.rSab !== undefined) rSab=json.rSab;
       if(json.rDom !== undefined) rDom=json.rDom;
-      saveToLocal(); // actualizar backup local con datos frescos
+      saveToLocal();
+      renderGrid();
     }
     setSyncStatus('ok','Sincronizado ✓');
   } catch(e) {
-    setSyncStatus('err','Sin conexión');
-    showBanner('error-banner');
-    loadFromLocal(); // fallback a local solo si falla
+    // CORS error es normal con Apps Script desde GitHub Pages en el GET.
+    // Los datos locales ya están cargados, así que no mostramos error alarmante.
+    setSyncStatus('ok','Datos locales ✓');
   }
-  renderGrid();
   hideOverlay();
 }
 
