@@ -941,11 +941,26 @@ function buildSummary(){
 }
 
 function copyText(text,btnId){
-  navigator.clipboard.writeText(text).then(()=>{
-    const btn=document.getElementById(btnId);const orig=btn.innerHTML;
+  const btn=document.getElementById(btnId);
+  const orig=btn.innerHTML;
+  function onOk(){
     btn.innerHTML='✓ ¡Copiado!';btn.classList.add('copied');
     setTimeout(()=>{btn.innerHTML=orig;btn.classList.remove('copied');},2200);
-  });
+  }
+  // Método moderno
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(onOk).catch(()=>fallback());
+  } else {
+    fallback();
+  }
+  function fallback(){
+    // Método compatible con todos los navegadores y móviles
+    const ta=document.createElement('textarea');
+    ta.value=text;ta.style.cssText='position:fixed;top:0;left:0;opacity:0;';
+    document.body.appendChild(ta);ta.focus();ta.select();
+    try{document.execCommand('copy');onOk();}catch(e){}
+    document.body.removeChild(ta);
+  }
 }
 
 let activeEmp='summary';
