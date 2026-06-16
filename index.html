@@ -399,8 +399,7 @@ async function saveToSheets(){
   }
 }
 
-async function loadFromSheets(){
-  // Primero cargar local y mostrar grilla de inmediato
+function loadFromSheets(){
   loadFromLocal();
   renderGrid();
 
@@ -412,30 +411,57 @@ async function loadFromSheets(){
   }
 
   setSyncStatus('saving','Sincronizando...');
-  hideBanner('config-banner');
-  hideBanner('error-banner');
 
-  // Usamos allorigins.win como proxy CORS — gratuito, sin configuración
-  const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(SHEETS_URL + '?action=load');
-  try {
-    const res = await fetch(proxy);
-    const outer = await res.json();
-    const json = JSON.parse(outer.contents);
-    if(json && json.employees && Object.keys(json.employees).length>0){
-      Object.keys(EMP).forEach(k=>delete EMP[k]);
-      Object.assign(EMP, json.employees);
-      if(json.days) days = json.days.map(d=>({label:d.label,blocks:d.blocks.map(b=>({...b,id:uid()}))}));
-      if(json.rVi !== undefined) rVi=json.rVi;
-      if(json.rSab !== undefined) rSab=json.rSab;
-      if(json.rDom !== undefined) rDom=json.rDom;
-      saveToLocal();
-      renderGrid();
-      setSyncStatus('ok','Sincronizado ✓');
-    }
-  } catch(e) {
-    setSyncStatus('ok','Datos locales ✓');
-  }
-  hideOverlay();
+  // Necesitamos la URL final tras la redirección de Google para que JSONP funcione
+  // La URL final de este Apps Script es siempre script.googleusercontent.com
+  const cbName = 'cb_' + Date.now();
+  let done = false;
+
+  window[cbName] = function(json){
+    done = true;
+    delete window[cbName];
+    try {
+      if(json && json.employees && Object.keys(json.employees).length>0){
+        Object.keys(EMP).forEach(k=>delete EMP[k]);
+        Object.assign(EMP, json.employees);
+        if(json.days) days = json.days.map(d=>({label:d.label,blocks:d.blocks.map(b=>({...b,id:uid()}))}));
+        if(json.rVi !== undefined) rVi=json.rVi;
+        if(json.rSab !== undefined) rSab=json.rSab;
+        if(json.rDom !== undefined) rDom=json.rDom;
+        saveToLocal();
+        renderGrid();
+        setSyncStatus('ok','Sincronizado ✓');
+      }
+    } catch(e){ setSyncStatus('ok','Datos locales ✓'); }
+    hideOverlay();
+  };
+
+  // Primero hacemos fetch normal para seguir la redirección y obtener la URL final
+  fetch(SHEETS_URL + '?action=load&callback=' + cbName)
+    .then(r => r.text())
+    .then(text => {
+      // Si el fetch funcionó (algunos navegadores lo permiten), ejecutamos directamente
+      if(!done){
+        try {
+          // El texto es "cbName({...})" — lo ejecutamos
+          const fn = new Function(cbName, text);
+          fn(window[cbName]);
+        } catch(e){
+          // Si no, intentamos JSONP con la URL final que nos dio el fetch (sin redirección)
+          const s = document.createElement('script');
+          s.src = SHEETS_URL + '?action=load&callback=' + cbName;
+          document.head.appendChild(s);
+          setTimeout(()=>{ if(!done){ done=true; delete window[cbName]; setSyncStatus('ok','Datos locales ✓'); hideOverlay(); }}, 6000);
+        }
+      }
+    })
+    .catch(()=>{
+      // CORS bloqueó el fetch — usamos JSONP puro
+      const s = document.createElement('script');
+      s.src = SHEETS_URL + '?action=load&callback=' + cbName;
+      document.head.appendChild(s);
+      setTimeout(()=>{ if(!done){ done=true; delete window[cbName]; setSyncStatus('ok','Datos locales ✓'); hideOverlay(); }}, 6000);
+    });
 }
 
 function scheduleSave(){
