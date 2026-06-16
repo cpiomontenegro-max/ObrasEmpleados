@@ -340,7 +340,7 @@ header p{font-size:13px;color:var(--muted);}
 // ─────────────────────────────────────────────
 // CONFIGURACIÓN JSONBIN
 // ─────────────────────────────────────────────
-const BIN_URL = 'https://api.jsonbin.io/v3/b/6a30d0e1da38895dfec78f30';
+const BIN_URL = 'https://api.jsonbin.io/v3/b/6a30d5e5da38895dfec7a0bc';
 const BIN_KEY = '$2a$10$XdfWWlmdZvHWEHnwkRopRenSkJaN9LfHrjq.jBi2L32mQcspikfky';
 let saveTimer = null;
 
@@ -388,9 +388,7 @@ async function loadFromSheets(){
   renderGrid();
   setSyncStatus('saving','Sincronizando...');
   try {
-    const res = await fetch(BIN_URL, {
-      headers:{'X-Master-Key':BIN_KEY}
-    });
+    const res = await fetch(BIN_URL);
     const outer = await res.json();
     const json = outer.record;
     if(json && json.employees && Object.keys(json.employees).length>0){
