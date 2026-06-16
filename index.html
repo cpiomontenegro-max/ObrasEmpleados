@@ -818,7 +818,13 @@ function deleteBlock(){
   closeEditor();scheduleSave();
 }
 function closeEditor(){selBlock=null;curBlock=null;document.getElementById('editor').style.display='none';renderGrid();}
-document.addEventListener('click',()=>{if(selBlock){selBlock=null;curBlock=null;document.getElementById('editor').style.display='none';renderGrid();}});
+document.addEventListener('click',(e)=>{
+  if(selBlock){
+    const ed=document.getElementById('editor');
+    if(ed.contains(e.target)) return; // no cerrar si el click es dentro del editor
+    selBlock=null;curBlock=null;ed.style.display='none';renderGrid();
+  }
+});
 
 // ── DRAG ─────────────────────────────────────────────────────
 function startDrag(ev,b,edge,di){
